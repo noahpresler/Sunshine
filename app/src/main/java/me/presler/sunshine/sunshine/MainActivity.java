@@ -2,6 +2,7 @@ package me.presler.sunshine.sunshine;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -89,7 +90,7 @@ public class MainActivity extends Activity {
             int id = item.getItemId();
             if (id == R.id.action_refresh) {
                 FetchWeatherTask weatherTask = new FetchWeatherTask();
-                weatherTask.execute();
+                weatherTask.execute("94043");
                 return true;
             }
             return super.onOptionsItemSelected(item);
@@ -123,27 +124,40 @@ public class MainActivity extends Activity {
             return rootView;
         }
 
-        public class FetchWeatherTask extends AsyncTask<Void, Void, Void> {
+        public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
             private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             @Override
-            protected Void doInBackground(Void... params) {
+            protected Void doInBackground(String... params) {
                 HttpURLConnection urlConnection = null;
                 BufferedReader reader = null;
-
                 // Will contain the raw JSON response as a string.
                 String forecastJsonStr = null;
+                String format = "json";
+                String units = "metric";
+                int numDays = 7;
 
                 try {
                     // Construct the URL for the OpenWeatherMap query
                     // Possible parameters are available at OWM's forecast API page, at
                     // http://openweathermap.org/API#forecast
-                    URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?" +
-                            "q=12309&mode=json&units=metric&cnt=7");
+                    final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/" +
+                            "forecast/daily?";
+                    final String QUERY_PARAM = "q";
+                    final String FORMAT_PARAM="mode";
+                    final String UNITS_PARAM = "units";
+                    final String DAYS_PARAM = "cnt";
 
-                    // Create the request to OpenWeatherMap, and open the connection
+                    Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                            .appendQueryParameter(QUERY_PARAM, params[0])
+                            .appendQueryParameter(FORMAT_PARAM, format)
+                            .appendQueryParameter(UNITS_PARAM, units)
+                            .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                            .build();
+                    URL url = new URL(builtUri.toString());
+
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
                     urlConnection.connect();
