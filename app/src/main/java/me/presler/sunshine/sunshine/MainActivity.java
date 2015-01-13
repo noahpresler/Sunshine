@@ -3,9 +3,11 @@ package me.presler.sunshine.sunshine;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -71,6 +73,25 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void openPreferredLocationInMap() {
+        SharedPreferences sharedPrefs=
+                PreferenceManager.getDefaultSharedPreferences(this);
+        String location = sharedPrefs.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q",location)
+                .build();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d("Sunshine", "Couldn't call " + location + ", not found");
+        }
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -99,11 +120,24 @@ public class MainActivity extends Activity {
             // as you specify a parent activity in AndroidManifest.xml.
             int id = item.getItemId();
             if (id == R.id.action_refresh) {
-                FetchWeatherTask weatherTask = new FetchWeatherTask();
-                weatherTask.execute("94043");
+                updateWeather();
                 return true;
             }
             return super.onOptionsItemSelected(item);
+        }
+
+        private void updateWeather() {
+            FetchWeatherTask weatherTask = new FetchWeatherTask();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = prefs.getString(getString(R.string.pref_location_key),
+                    getString(R.string.pref_location_default));
+            weatherTask.execute(location);
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            updateWeather();
         }
 
         private ArrayAdapter<String> mForecastAdapter;
@@ -164,7 +198,7 @@ public class MainActivity extends Activity {
                 // Will contain the raw JSON response as a string.
                 String forecastJsonStr = null;
                 String format = "json";
-                String units = "metric";
+                String units = "imperial";
                 int numDays = 7;
 
                 try {
