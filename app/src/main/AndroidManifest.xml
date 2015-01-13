@@ -26,6 +26,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="me.presler.sunshine.sunshine.MainActivity" />
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName="me.presler.sunshine.sunshine.MainActivity">
+        </activity>
     </application>
 
 </manifest>
